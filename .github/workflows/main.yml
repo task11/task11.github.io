@@ -10,7 +10,7 @@ jobs:
 
     steps:
       # https://github.com/marketplace/actions/checkout
-      - name: 🧑🏻checkout source code
+      - name: checkout source code
         uses: actions/checkout@v2.3.4
 
       # https://github.com/marketplace/actions/setup-node-js-environment

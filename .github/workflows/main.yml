@@ -1,4 +1,4 @@
-name: typed-blog-deploy
+name: task11-blog-deploy
 
 on:
   push:

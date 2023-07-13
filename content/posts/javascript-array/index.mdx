@@ -1,0 +1,657 @@
+---
+title: 자바스크립트의 배열
+date: 2022-03-21
+description: "Javascript's Array"
+banner: ./array_banner.png
+tags:
+  - JS
+---
+
+> 💡 자바스크립트의 배열을 예제를 작성하며 알아보자.
+
+# 개요 🛫
+
+---
+
+> 이번 포스트에서는 자바스크립트의 배열의 특징과 배열의 프로토타입 함수들을 정리하고, 공부하는 시간을 가져볼 것이다.
+
+매우 매우 자주 사용되는 `reduce`, `filter` .. 등등 배열 프로토타입 함수들을 예제를 통해 파헤쳐보고 익숙해지는 시간을 가진다.
+
+# 학습 내용 📖
+
+---
+
+## 자바스크립트의 배열
+
+### 자바스크립트의 배열은 다르다 ?
+
+> 자바스크립트의 배열은 다른 언어에서 말하는 일반적인 배열이 아닌 Hash 기반의 객체이다.
+
+다른 언어에서의 배열이라는 자료 구조의 개념은 동일한 크기의 메모리 공간이 빈틈없이 연속적으로 나열된 자료 구조를 말하며
+배열의 요소가 하나의 타입으로 통일되어 있고, 서로 연속적으로 인접해 있는`밀집 배열`(dense array)이다.
+
+> `밀집 배열`은 인덱스를 통해 고속으로 효율적이게 요소에 접근할 수 있다는 장점이 있다.(시간 복잡도 O(1))
+> 하지만 정렬되지 않은 배열에서 특정한 값을 탐색하는 경우, 모든 배열 요소를 처음부터 값을 발견할 때까지 차례대로 탐색해야 한다는 단점이 있다. (시간 복잡도 O(n))
+
+자바스크립트는 배열의 요소를 위한 각각의 메모리 공간은 동일한 크기를 갖지 않아도 되며 연속적으로 이어져 있지 않을 수도 있다.
+배열의 요소가 연속적으로 이어져 있지 않는 배열을 `희소 배열`(sparse array)이라 한다.
+
+> `일반적인 배열`은 인덱스로 배열 요소에 빠르게 접근할 수 있다. 하지만 특정 요소를 탐색하거나 요소를 삽입 또는 삭제하는 경우에는 효율적이지 않다.
+> `자바스크립트 배열`은 해시 테이블로 구현된 객체이므로 인덱스로 배열 요소에 접근하는 경우, 일반적인 배열보다 성능적인 면에서 느릴 수 밖에 없는 구조적인 단점을 갖는다. 하지만 특정 요소를 탐색하거나 요소를 삽입 또는 삭제하는 경우에는 일반적인 배열보다 빠른 성능을 기대할 수 있다.
+
+이처럼 자바스크립트의 배열은 엄밀히 말해 일반적 의미의 배열이 아니다. 자바스크립트의 배열은 일반적인 배열의 동작을 흉내낸 특수한 객체이다.
+
+```javascript
+let nums = [];
+
+nums.push("one");
+nums.push("two");
+console.log(nums.length); // 2
+console.log(nums); // [ 'one', 'two' ]
+
+console.log(Object.getOwnPropertyDescriptors(nums));
+// {
+//   '0': {
+//     value: 'one',
+//     writable: true,
+//     enumerable: true,
+//     configurable: true
+//   },
+//   '1': {
+//     value: 'two',
+//     writable: true,
+//     enumerable: true,
+//     configurable: true
+//   },
+//   length: { value: 2, writable: true, enumerable: false, configurable: false }
+// }
+```
+
+> 💡 자바스크립트 배열은 인덱스를 프로퍼티 키로 갖으며 length 프로퍼티를 갖는 특수한 객체이다.
+
+### 유사 배열
+
+> 자바스크립트의 배열은 `객체`이므로 배열과 같이 객체를 선언하면 배열과 비슷하게 동작한다.
+
+아래는 유사배열의 예시이다.
+
+```javascript
+let arr = [1, 2, 3];
+let nodes = document.querySelectorAll("div"); // NodeList [div, div ...]
+
+// 유사 배열
+let arrLikeObj = {
+  0: "a",
+  1: "b",
+  2: "c",
+  3: "d",
+  length: 4,
+};
+
+Array.isArray(array); // true
+Array.isArray(nodes); // false
+Array.isArray(arrLikeObj); // false
+```
+
+위 예제를 보면 arrLikeObj 객체는 배열과 동일하게 동작할 수 있다.
+
+```javascript
+let arrLikeObj = {
+  0: "a",
+  1: "b",
+  2: "c",
+  3: "d",
+  length: 4,
+};
+
+console.log(arrLikeObj[0]); // a
+console.log(arrLikeObj[1]); // b
+console.log(arrLikeObj[2]); // c
+console.log(arrLikeObj[3]); // d
+console.log(arrLikeObj.length); // 4
+```
+
+이렇게 동일하게 동작할 수 있지만, 배열과 유사 배열을 구분해야하는 이유는 유사배열의 경우 배열의 메서드를 쓸 수 없기 때문이다.
+
+유사배열은 `call`이나 `apply`를 사용해 배열 프로토타입에서 메서드를 빌려 써야한다.
+
+```javascript
+// forEach 빌리기
+Array.prototype.forEach.call(arrLikeObj, function (item) {
+  console.log(item);
+});
+[].forEach.call(arrLikeObj, function (item) {
+  console.log(item);
+});
+
+// ES6
+Array.from(arrLikeObj).forEach(function (item) {
+  console.log(item);
+});
+```
+
+> 메서드를 빌려 유사 배열을 배열처럼 동작시키는 것은 웹 프로젝트를 할 때 API 데이터를 가공하는 과정에서 사용했던 기억이 있다.
+
+---
+
+## 예제로 보는 배열 메서드
+
+> 자주 사용되는 배열 메서드를 정리
+
+### 1. push(pop) / shift(unshift) - 배열 추가/삭제
+
+1. LIFO - Back : 뒤에서부터 작동
+   추가 : `Array.push(item)`
+   삭제 : `Array.pop()`
+
+```javascript
+let nums = [1, 2, 3, 4, 5];
+
+console.log(nums); // [ 1, 2, 3, 4, 5 ]
+
+nums.push(6);
+console.log(nums); // [ 1, 2, 3, 4, 5, 6 ]
+
+nums.pop();
+console.log(nums); // [ 1, 2, 3, 4, 5 ]
+```
+
+2. LIFO - Front : 앞에서부터 작동
+   추가 : `Array.unshift(item)`
+   삭제 : `Array.shift()`
+
+```javascript
+let nums = [1, 2, 3, 4, 5];
+
+console.log(nums); // [ 1, 2, 3, 4, 5 ]
+
+nums.unshift(0);
+console.log(nums); // [ 0, 1, 2, 3, 4, 5 ]
+
+nums.shift();
+console.log(nums); // [ 1, 2, 3, 4, 5 ]
+```
+
+### 2. splice - 배열 삭제/변경 (index)
+
+1. 삭제/변경 : `Array.splice(index[, deleteCount, elem1,...elemN])`
+
+```javascript
+let uname = ["김정현", "박정민", "이호섭", "최국진", "유바보"];
+let ref;
+ref = uname.splice(3);
+console.log(ref); // [ '최국진', '유바보' ]
+console.log(uname); // [ '김정현', '박정민', '이호섭' ]
+
+ref = uname.splice(1, 1);
+console.log(ref); // [ '박정민' ]
+console.log(uname); // [ '김정현', '이호섭' ]
+
+ref = uname.splice(1, 1, "noob");
+console.log(ref); // [ '이호섭' ]
+console.log(uname); // [ '김정현', 'noob' ]
+```
+
+> `splice`는 원본이 훼손된다.
+
+### 3. slice - 배열 삭제 (index)
+
+1. 삭제 : `Array.slice([start], [end])`
+
+```javascript
+let uname = ["김정현", "박정민", "이호섭", "최국진", "유바보"];
+
+// 1(제외) 오른쪽 출력
+console.log(uname.slice(1)); // [ '박정민', '이호섭', '최국진', '유바보' ]
+
+// 3(제외) 오른쪽 출력
+console.log(uname.slice(3)); // [ '최국진', '유바보' ]
+
+// 1(제외) ~ 3 사이 출력
+console.log(uname.slice(1, 3)); // [ '박정민', '이호섭' ]
+
+// -2(포함) 오른쪽 출력
+console.log(uname.slice(-2)); // [ '최국진', '유바보' ]
+
+// 원본 유지
+console.log(uname); // [ '김정현', '박정민', '이호섭', '최국진', '유바보' ]
+```
+
+> `slice`는 원본이 유지된다.
+
+### 4. concat - 배열 병합
+
+1. 병합 : `Array.concat(arg1, arg2, arg3, ...)`
+
+```javascript
+let uname = ["김정현", "박정민", "이호섭", "최국진", "유바보"];
+
+console.log(uname.concat("noob1")); // [ '김정현', '박정민', '이호섭', '최국진', '유바보', 'noob1' ]
+
+console.log(uname.concat(["noob1", "noob2"], "noob3")); // [ '김정현', '박정민', '이호섭', '최국진', '유바보', 'noob1', 'noob2', 'noob3' ]
+
+// 원본 훼손 X
+console.log(uname); // [ '김정현', '박정민', '이호섭', '최국진', '유바보' ]
+```
+
+### 5. for-loop(index) / for...of(item) / for...in(key) - 배열 탐색
+
+1. Common `for`-loop(index)
+
+```javascript
+let uname = ["김정현", "박정민", "이호섭", "최국진", "유바보"];
+
+for (let i = 0; i < uname.length; i++) {
+  console.log(uname[i]);
+}
+// output : 김정현 박정민 이호섭 최국진 유바보
+```
+
+2. `for...of`(item)
+
+```javascript
+for (let name of uname) {
+  console.log(name);
+}
+// output : 김정현 박정민 이호섭 최국진 유바보
+```
+
+3. `for...in`(key)
+
+```javascript
+for (let key in uname) {
+  console.log(uname[key]);
+}
+// output : 김정현 박정민 이호섭 최국진 유바보
+```
+
+### 6. indexOf / lastIndexOf / includes - 배열 탐색
+
+1. item의 index 탐색(front) : `Array.indexOf(item)`
+
+```javascript
+let uname = ["e", "c", "f", "a", "d", "b", "a"];
+
+console.log(uname.indexOf("a")); // index : 3
+console.log(uname.indexOf("z")); // index : -1 (존재 X)
+console.log(uname.indexOf("a", 4)); // index : 6 (index 4 이후의 중복 item index)
+console.log(uname.indexOf("a", uname.indexOf("a") + 1)); // index : 6 (첫 번 쨰 item의 중복 item index)
+```
+
+2. item의 index 탐색(back) : `Array.lastIndexOf(item)`
+
+```javascript
+console.log(uname.lastIndexOf("a")); // index : 6
+console.log(uname.lastIndexOf("a", -2)); // index : 3
+```
+
+3. item의 include 여부 : `Array.includes(item)`
+
+```javascript
+console.log(uname.includes("a")); // true
+console.log(uname.includes("z")); // false
+```
+
+### 7. sort / reverse - 배열 정렬
+
+1. 내림차순 정렬 : `Array.sort()`
+
+```javascript
+let abc = ["e", "c", "f", "a", "d", "b", "a"];
+let nums = [5, 3, 6, 1, 2, 4, 7];
+
+console.log(abc.sort()); // ['a', 'a', 'b', 'c', 'd', 'e','f']
+
+console.log(nums.sort()); // [1, 2, 3, 4, 5, 6, 7]
+```
+
+> `sort` 메서드를 사용할 때 문제점과 정렬 불가능한 경우가 있는데, sort에 콜백함수를 넣어 조건 부 정렬이 가능하다. [아래 고차 함수 부분](<###sort(callback-function)임의정렬>) 에서 예제 확인 가능하다.
+
+2. 오름차순 정렬 : `Array.reverse()`
+
+```javascript
+console.log(abc.reverse()); // [ 'f', 'e', 'd', 'c', 'b', 'a', 'a']
+
+console.log(nums.reverse()); // [7, 6, 5, 4, 3, 2, 1]
+```
+
+### 8. join - 배열 변환
+
+1. 배열 값을 문자열로 변환 : `Array.join(separator)`
+
+```javascript
+let hello = ["안", "녕", "하", "세", "요", " ", "join", "예제", "입니다."];
+
+console.log(hello.join("~")); // 안~녕~하~세~요~ ~join~예제~입니다.
+console.log(hello.join("")); // 안녕하세요 join예제입니다.
+
+let str = hello.join("!");
+console.log(str); // 안!녕!하!세!요! !join!예제!입니다.
+
+console.log(str.split("!")); // ['안', '녕', '하', '세', '요', ' ', 'join', '예제', '입니다.']
+```
+
+---
+
+## + 배열 메서드 (고차 함수)
+
+### 1. sort(callback function)임의정렬
+
+#### sort 정렬 issue
+
+1. 숫자의 자리수 정렬 문제 : sort 메서드로 요소가 정렬될 때 일시적으로 요소들을 문자열로 변경시키는데, 이 때 ASCII 문자 순서로 정렬되어 숫자의 크기대로 나오지 않는 문제
+
+```javascript
+let nums = [10, 2, 4, 3, 5, 20, 7, -1, 9, 1];
+
+console.log(nums.sort()); // [ -1, 1, 10, 2, 20, 3, 4, 5, 7, 9]
+console.log(nums.reverse()); // [9, 7, 5, 4, 3, 20, 2, 10, 1, -1]
+```
+
+2. 대소문자 구분되어 정렬 : 원인은 위와 같음
+
+```javascript
+let abc = ["e", "c", "f", "a", "d", "F", "b", "A"];
+
+console.log(abc.sort()); // ['A', 'F', 'a', 'b', 'c', 'd', 'e', 'f']
+console.log(abc.reverse()); // ['f', 'e', 'd', 'c', 'b', 'a', 'F', 'A']
+```
+
+#### sort(callbackFn)으로 해결 가능
+
+> sort 메서드는 `(method) Array<number>.sort(compareFn?: (a: number, b: number) => number)` 로 두 수의 값을 비교해서 동작하는 정렬 알고리즘이다.
+
+1. number 타입 정렬
+
+```javascript
+let nums = [10, 2, 4, 3, 5, 20, 7, -1, 9, 1];
+
+// 오름차순
+nums.sort(function (x, y) {
+  return x - y;
+});
+
+console.log(nums);
+
+// 내림차순
+nums.sort(function (x, y) {
+  return y - x;
+});
+
+console.log(nums);
+```
+
+2. string 타입 대소문자 구분 없이 정렬
+
+```javascript
+let abc = ["e", "c", "f", "a", "d", "F", "b", "A"];
+
+// 오름차순
+abc.sort(function (x, y) {
+  x = x.toUpperCase();
+  y = y.toUpperCase();
+
+  if (x > y) return 1;
+  else if (x < y) return -1;
+  else return 0;
+});
+
+console.log(abc);
+
+// 내림차순
+abc.sort(function (x, y) {
+  x = x.toUpperCase();
+  y = y.toUpperCase();
+
+  if (x < y) return 1;
+  else if (x > y) return -1;
+  else return 0;
+});
+
+console.log(abc);
+```
+
+3. number, string 타입 대소문자 구분없는 정렬 (위 정렬코드를 하나로)
+
+```javascript
+const ascendingOrder = function (x, y) {
+  if (typeof x === "string") x = x.toUpperCase();
+  if (typeof y === "string") y = y.toUpperCase();
+
+  return x > y ? 1 : -1;
+};
+
+const descendingOrder = function (x, y) {
+  if (typeof x === "string") x = x.toUpperCase();
+  if (typeof y === "string") y = y.toUpperCase();
+
+  return x < y ? 1 : -1;
+};
+
+nums.sort(ascendingOrder);
+abc.sort(descendingOrder);
+```
+
+### 2. forEach() - 요소별 실행
+
+> 주어진 함수를 배열 요소 각각에 대해 실행 : `Array.forEach(function(item, index, array){})`
+
+1. 기본 예제
+
+```javascript
+let abc = ["a", "b", "c", "d"];
+
+abc.forEach(function (i) {
+  console.log(i);
+});
+
+abc.forEach(function (item, index) {
+  console.log(item + " foreach");
+});
+
+// a
+// b
+// c
+// d
+
+// a foreach
+// b foreach
+// c foreach
+// d foreach
+```
+
+### 3. map() - 요소별 실행(배열로 반환)
+
+> 주어진 함수를 배열 요소 각각에 대해 실행하고 결과를 배열로 반환 : `Array.map(function(item, index, array){})`
+
+1. 기본 예제
+
+```javascript
+let abc = ["a", "b", "c", "d"];
+
+let abcMap = abc.map(function (item) {
+  return item + " map 순회";
+});
+
+for (let item of abcMap) {
+  console.log(item);
+}
+
+// a map 순회
+// b map 순회
+// c map 순회
+// d map 순회
+```
+
+### 4. find() - 조건만족하는 값 하나 반환
+
+> 콜백 함수의 조건을 만족하는 단 **하나**의 값만 반환 : `Array.find(function(item, index, array){})`
+
+1. 기본 예제
+
+```javascript
+let person = [
+  {
+    name: "김정현",
+    age: 28,
+  },
+  {
+    name: "배윤주",
+    age: 26,
+  },
+  {
+    name: "김길동",
+    age: 16,
+  },
+  {
+    name: "박길동",
+    age: 18,
+  },
+];
+
+let findName = person.find(function (user) {
+  return user.name === "김정현";
+});
+
+let findAge = person.find(function (user) {
+  return user.age < 18;
+});
+
+console.log(findName); // { name: '김정현', age: 28 }
+console.log(findAge); // { name: '김길동', age: 16 }
+```
+
+### 5. filter() - 조건만족하는 값을 배열로 반환
+
+> 콜백 함수의 조건을 만족하는 값을 배열로 반환 : `Array.filter(function(item, index, array){})`
+
+1. 기본 예제
+
+```javascript
+let person = [
+  {
+    name: "김정현",
+    age: 28,
+  },
+  {
+    name: "배윤주",
+    age: 26,
+  },
+  {
+    name: "김길동",
+    age: 16,
+  },
+  {
+    name: "박길동",
+    age: 18,
+  },
+];
+
+let findAge = person.filter(function (user) {
+  return user.age > 18;
+});
+
+console.log(findAge); // [ { name: '김정현', age: 28 }, { name: '배윤주', age: 26 } ]
+```
+
+### 6. reduce() - 요소 별 실행(누적 값 반환)
+
+> 요소 별 함수 수행 누적 결과값 반환 : `Array.reduce(function(accumulator, item, index, array){})`
+
+1. 기본 예제
+
+```javascript
+let nums = [1, 2, 3, 4, 5, 6, 7];
+let count = 0;
+
+let sum = nums.reduce(function (acc, item, index, array) {
+  count++;
+  console.log(acc, " ", item, " ", index);
+  return acc + item;
+}, 0); // acc값 init하는 부분(default : 1)
+
+console.log("count : " + count);
+
+// 0   1   0
+// 1   2   1
+// 3   3   2
+// 6   4   3
+// 10   5   4
+// 15   6   5
+// 21   7   6
+// count : 7
+```
+
+### 7. some() - 요소의 조건 만족시 참
+
+> 배열 내 단 하나라도 콜백 함수의 조건을 만족하는 요소가 있다면 true
+> `Array.some(function(item, index, array){})`
+
+```javascript
+let person = [
+  {
+    name: "김정현",
+    age: 28,
+  },
+  {
+    name: "배윤주",
+    age: 26,
+  },
+  {
+    name: "김길동",
+    age: 16,
+  },
+  {
+    name: "박길동",
+    age: 18,
+  },
+];
+
+let someAge = person.some(function (user) {
+  return user.age == 28;
+});
+
+console.log(someAge); // true
+```
+
+### 8. every() - 요소 모두 조건 만족시 참
+
+> 배열 내 모든 요소가 콜백 함수의 조건을 만족하는 요소가 있다면 true
+> `Array.every(function(item, index, array){})`
+
+```javascript
+let person = [
+  {
+    name: "김정현",
+    age: 28,
+  },
+  {
+    name: "배윤주",
+    age: 26,
+  },
+  {
+    name: "김길동",
+    age: 16,
+  },
+  {
+    name: "박길동",
+    age: 18,
+  },
+];
+
+let everyAge = person.every(function (user) {
+  return user.age > 15;
+});
+
+console.log(everyAge); // true
+```
+
+# Review 💡
+
+이번 포스트에는 자바스크립트의 배열에 대해 알아보고, 일반 배열과의 차이점에 대해 공부해보았다.
+
+또한, 자바스크립트 배열의 프로토타입 메서드 14가지 정도를 살펴보았고. 각각의 동작원리에 대해 이해하고, 예제 코드로 실습을 해보았다.
+
+이전 개인 프로젝트 등을 진행하면서 reduce, filter, map 등 함수들을 자주 사용했는데, 이번 기회에 정리를 해보니 더 유용하게 사용할 수 있겠다는 생각이 들었다.
+
+> API 호출로 가져오는 JSON Data의 가공이나 Data 필터 조회 시 사용했는데,, 객체의 depth가 깊어질 수록 함수를 짜기가 어려웠던 것 같다. 기초를 단단히 하였으니 다음엔 더 효율적인 코드를 작성할 수 있을 것 같다.

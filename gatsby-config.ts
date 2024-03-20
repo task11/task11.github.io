@@ -17,6 +17,12 @@ const config: GatsbyConfig = {
   trailingSlash: `never`,
   plugins: [
     {
+      resolve: `gatsby-transformer-remark`,
+      options: {
+        plugins: [`gatsby-remark-copy-relative-linked-files`],
+      },
+    },
+    {
       resolve: `@lekoarts/gatsby-theme-minimal-blog`,
       options: {
         navigation: [
